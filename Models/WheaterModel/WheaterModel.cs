@@ -2,6 +2,17 @@ using System;
 
 namespace weather_forecast_bot
 {
+    public enum Lang
+    {
+        ru_RU = 0,
+        ru_UA = 1,
+        uk_UA = 2,
+        be_BY = 3,
+        kk_KZ = 4,
+        tr_TR = 5,
+        en_US = 6
+    }
+
     public class WheaterModel
     {
         public int now { get; set; }
