@@ -100,7 +100,7 @@ namespace weather_forecast_bot
         public float cloudness { get; set; }
         public int prec_type { get; set; }
         public int prec_prob { get; set; }
-        public int prec_strength { get; set; }
+        public float prec_strength { get; set; }
         public bool is_thunder { get; set; }
         public float wind_speed { get; set; }
         public string wind_dir { get; set; }

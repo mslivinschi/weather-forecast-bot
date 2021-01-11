@@ -8,13 +8,15 @@ namespace weather_forecast_bot
         static void Main(string[] args)
         {
 
-            var t = GetWheater();
+            var tg = new TelegramServices();
+
+            // var t = GetWheater();
             Console.WriteLine("Hello World!");
         }
 
 
         // Default Chishinau 
-        private static WheaterModel GetWheater(double lat = 47.024512, double lon = 28.832157, bool extra = false, string lang = "en_US", bool hours = false, int limit = 3)
+        public static WheaterModel GetWheater(double lat = 47.024512, double lon = 28.832157, bool extra = false, string lang = "en_US", bool hours = false, int limit = 3)
         {
             var client = new RestClient($"https://api.weather.yandex.ru/v2/forecast");
             var request = new RestRequest(Method.GET);
