@@ -1,9 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>weather_forecast_bot</RootNamespace>
   </PropertyGroup>
-
+  <ItemGroup>
+    <PackageReference Include="RestSharp" Version="106.11.7"/>
+    <PackageReference Include="RestSharp.Newtonsoft.Json" Version="1.5.1"/>
+    <PackageReference Include="Telegram.Bot" Version="15.7.1"/>
+  </ItemGroup>
 </Project>
