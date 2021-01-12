@@ -10,6 +10,7 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
 using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
+using System.Collections.Generic;
 
 namespace weather_forecast_bot
 {
@@ -120,10 +121,10 @@ namespace weather_forecast_bot
                     break;
             }
 
-            // await Bot.AnswerCallbackQueryAsync(
-            //     callbackQueryId: callbackQuery.Id,
-            //     text: $"Success!"
-            // );
+            await Bot.AnswerCallbackQueryAsync(
+                callbackQueryId: callbackQuery.Id,
+                text: $"Success!"
+            );
         }
 
         private static async Task SendWeather(long chatId, double lat = 47.024512, double lon = 28.832157)
@@ -134,18 +135,29 @@ namespace weather_forecast_bot
                             $"Country: {response.geo_object.country?.name} \n" +
                             $"Province: {response.geo_object.province?.name}";
 
-            Guid guid1 = Guid.NewGuid();
-            Guid guid2 = Guid.NewGuid();
-            Guid guid3 = Guid.NewGuid();
+            var msList = new List<MessageModel>();
+            var inlineKey = new List<InlineKeyboardButton>();
+
+            for (int i = 0; i < 3; i++)
+            {
+                var msModel = new MessageModel(){
+                    Guid = Guid.NewGuid(),
+                    DateTime = DateTime.Now.AddDays(i+1),
+                    Lat = lat,
+                    Lon = lon,
+
+                };
+                msList.Add(msModel);
+                inlineKey.Add(new InlineKeyboardButton()
+                {
+                    CallbackData = msModel.Guid.ToString(),
+                    Text = $"{msModel.DateTime.ToString("m")}"
+                });
+            }
 
             var inlineKeyboard = new InlineKeyboardMarkup(new[]
             {
-                new []
-                {
-                    InlineKeyboardButton.WithCallbackData($"{DateTime.Now.AddDays(1).ToString("m")}", guid1.ToString()),
-                    InlineKeyboardButton.WithCallbackData($"{DateTime.Now.AddDays(2).ToString("m")}", guid2.ToString()),
-                    InlineKeyboardButton.WithCallbackData($"{DateTime.Now.AddDays(3).ToString("m")}", guid3.ToString()),
-                },
+                inlineKey.ToArray(),
                 new []
                 {
                     InlineKeyboardButton.WithCallbackData("Get Weather", "GedDefaultWeather")
