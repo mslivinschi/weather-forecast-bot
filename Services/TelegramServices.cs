@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Data;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -40,7 +41,6 @@ namespace weather_forecast_bot
             Bot.OnMessage += BotOnMessageReceived;
             Bot.OnMessageEdited += BotOnMessageReceived;
             Bot.OnCallbackQuery += BotOnCallbackQueryReceived;
-            Bot.OnInlineQuery += BotOnInlineQueryReceived;
             Bot.OnInlineResultChosen += BotOnChosenInlineResultReceived;
             Bot.OnReceiveError += BotOnReceiveError;
 
@@ -60,8 +60,8 @@ namespace weather_forecast_bot
             {
                 switch (message.Text.Split(' ').First())
                 {
-                    case "/request":
-                        await RequestContactAndLocation(message);
+                    case "/start":
+                        await Start(message);
                         break;
 
                     default:
@@ -71,88 +71,101 @@ namespace weather_forecast_bot
             }
             else if (message.Type == MessageType.Location)
             {
-                var response = Program.GetWheater(lat: message.Location.Latitude, lon: message.Location.Longitude);
-                //message.Location.Latitude
-                //message.Location.Longitude
-
-                string _usage = $"Temperature: {response.fact.temp} \n" +
-                                $"Loc: {response.geo_object.locality.name} \n" +
-                                $"Loc: {response.geo_object.country.name} \n";
-
-                await Bot.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: _usage,
-                    replyMarkup: new ReplyKeyboardRemove()
-                );
-            }
-
-            // static async Task
-            // Send inline keyboard
-            // You can process responses in BotOnCallbackQueryReceived handler
-        
-            static async Task RequestContactAndLocation(Message message)
-            {
-                var RequestReplyKeyboard = new ReplyKeyboardMarkup(new[]
-                {
-                    KeyboardButton.WithRequestLocation("Location"),
-                    KeyboardButton.WithRequestContact("Contact"),
-                });
-                await Bot.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: "Who or Where are you?",
-                    replyMarkup: RequestReplyKeyboard
-                );
-            }
-
-            static async Task Usage(Message message)
-            {
-                const string usage = "Usage:\n" +
-                                        "/request  - request location or contact";
-                await Bot.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: usage,
-                    replyMarkup: new ReplyKeyboardRemove()
-                );
+                await SendWheather(message);
             }
         }
 
-        // Process Inline Keyboard callback data
+        
+        private static async Task Start(Message message)
+        {
+            string _usage = $"Weather Forecast\n" +
+                            $"Technical University of Moldova\n";
+            
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new []
+                {
+                    InlineKeyboardButton.WithCallbackData("Settings", "1.1"),
+                    InlineKeyboardButton.WithCallbackData("Get Weather", "GedDefaultWeather")
+                },
+            });
+
+            await Bot.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: _usage,
+                replyMarkup: inlineKeyboard
+            );
+        }
+
+        private static async Task SendWheather(Message message)
+        {
+            if (message.Type != MessageType.Location)
+            {
+                return;
+            }
+            await SendWeather(message.Chat.Id, message.Location.Latitude, message.Location.Longitude);
+        }
+
         private static async void BotOnCallbackQueryReceived(object sender, CallbackQueryEventArgs callbackQueryEventArgs)
         {
             var callbackQuery = callbackQueryEventArgs.CallbackQuery;
 
-            await Bot.AnswerCallbackQueryAsync(
-                callbackQueryId: callbackQuery.Id,
-                text: $"Received {callbackQuery.Data}"
-            );
+            switch (callbackQuery.Data)
+            {
+                case "GedDefaultWeather":
+                        await SendWeather(callbackQuery.Message.Chat.Id);
+                    break;
 
-            await Bot.SendTextMessageAsync(
-                chatId: callbackQuery.Message.Chat.Id,
-                text: $"Received {callbackQuery.Data}"
-            );
+                default:
+                    break;
+            }
+
+            // await Bot.AnswerCallbackQueryAsync(
+            //     callbackQueryId: callbackQuery.Id,
+            //     text: $"Success!"
+            // );
         }
 
-        #region Inline Mode
-
-        private static async void BotOnInlineQueryReceived(object sender, InlineQueryEventArgs inlineQueryEventArgs)
+        private static async Task SendWeather(long chatId, double lat = 47.024512, double lon = 28.832157)
         {
-            Console.WriteLine($"Received inline query from: {inlineQueryEventArgs.InlineQuery.From.Id}");
+            var response = WheaterServices.GetWheater(lat: lat, lon: lon);
+            string text = $"Temperature: {response.fact?.temp} °C \n" +
+                            $"Locality: {response.geo_object.locality?.name} \n" +
+                            $"Country: {response.geo_object.country?.name} \n" +
+                            $"Province: {response.geo_object.province?.name}";
 
-            InlineQueryResultBase[] results = {
-                // displayed result
-                new InlineQueryResultArticle(
-                    id: "3",
-                    title: "TgBots",
-                    inputMessageContent: new InputTextMessageContent(
-                        "hello"
-                    )
-                )
-            };
-            await Bot.AnswerInlineQueryAsync(
-                inlineQueryId: inlineQueryEventArgs.InlineQuery.Id,
-                results: results,
-                isPersonal: true,
-                cacheTime: 0
+            Guid guid1 = Guid.NewGuid();
+            Guid guid2 = Guid.NewGuid();
+            Guid guid3 = Guid.NewGuid();
+
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new []
+                {
+                    InlineKeyboardButton.WithCallbackData($"{DateTime.Now.AddDays(1).ToString("m")}", guid1.ToString()),
+                    InlineKeyboardButton.WithCallbackData($"{DateTime.Now.AddDays(2).ToString("m")}", guid2.ToString()),
+                    InlineKeyboardButton.WithCallbackData($"{DateTime.Now.AddDays(3).ToString("m")}", guid3.ToString()),
+                },
+                new []
+                {
+                    InlineKeyboardButton.WithCallbackData("Get Weather", "GedDefaultWeather")
+                }
+            });
+            var mes = await Bot.SendTextMessageAsync(
+                chatId: chatId,
+                text: text,
+                replyMarkup: inlineKeyboard
+            );
+            
+        }
+
+        private static async Task Usage(Message message)
+        {
+            const string usage = "Usage: /start";
+            await Bot.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: usage,
+                replyMarkup: new ReplyKeyboardRemove()
             );
         }
 
@@ -160,8 +173,6 @@ namespace weather_forecast_bot
         {
             Console.WriteLine($"Received inline result: {chosenInlineResultEventArgs.ChosenInlineResult.ResultId}");
         }
-
-        #endregion
 
         private static void BotOnReceiveError(object sender, ReceiveErrorEventArgs receiveErrorEventArgs)
         {
