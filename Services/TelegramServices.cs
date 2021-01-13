@@ -76,6 +76,7 @@ namespace weather_forecast_bot
             {
                 await SendWheather(message);
             }
+            Console.WriteLine($"{MessageType.Text} {message.MessageId} {message.Chat.Id} {message.Chat.FirstName} {message.Chat.LastName}");
         }
 
         
@@ -209,7 +210,7 @@ namespace weather_forecast_bot
 
         private static async Task Usage(Message message)
         {
-            const string usage = "Usage: /start";
+            const string usage = "Usage: /start, or send your location";
             await Bot.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: usage,
