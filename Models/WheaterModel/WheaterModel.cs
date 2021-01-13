@@ -139,6 +139,12 @@ namespace weather_forecast_bot
         public Parts parts { get; set; }
         public Hour[] hours { get; set; }
         public Biomet biomet { get; set; }
+
+        public int temp_min {get; set;}
+
+        public int temp_max {get;set;}
+
+        public int temp_avg {get; set;}
     }
 
     public class Parts

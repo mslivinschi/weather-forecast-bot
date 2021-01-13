@@ -29,6 +29,7 @@ namespace weather_forecast_bot
     public class TelegramServices
     {
         private static Telegram.Bot.TelegramBotClient Bot;
+        private static List<MessageModel> msList = new List<MessageModel>();
 
         public TelegramServices()
         {
@@ -44,6 +45,7 @@ namespace weather_forecast_bot
             Bot.OnCallbackQuery += BotOnCallbackQueryReceived;
             Bot.OnInlineResultChosen += BotOnChosenInlineResultReceived;
             Bot.OnReceiveError += BotOnReceiveError;
+            
 
             Bot.StartReceiving(Array.Empty<UpdateType>());
 
@@ -110,6 +112,7 @@ namespace weather_forecast_bot
         private static async void BotOnCallbackQueryReceived(object sender, CallbackQueryEventArgs callbackQueryEventArgs)
         {
             var callbackQuery = callbackQueryEventArgs.CallbackQuery;
+            var text = "Success!";
 
             switch (callbackQuery.Data)
             {
@@ -118,13 +121,47 @@ namespace weather_forecast_bot
                     break;
 
                 default:
+                        var _row = msList.FirstOrDefault(x => x.Guid.ToString() == callbackQuery.Data);
+                        if (_row != null)
+                        {
+                            GetWeatherByGuid(callbackQuery.Message.Chat.Id, _row);
+                        } else text = "Guid not found!";
                     break;
             }
 
             await Bot.AnswerCallbackQueryAsync(
                 callbackQueryId: callbackQuery.Id,
-                text: $"Success!"
+                text: text
             );
+        }
+
+        private static void GetWeatherByGuid(long chatId, MessageModel mes)
+        {
+            var response = WheaterServices.GetWheater(lat: mes.Lat, lon: mes.Lon, limit: 7);
+            var forecast = response.forecasts.FirstOrDefault(x => x.date == mes.DateTime.ToString("yyyy-MM-dd"));
+            string text;
+
+            if (forecast != null)
+            {
+                var day = forecast.parts.day_short;
+                var night = forecast.parts.night_short;
+
+                text =  $"Locality: {response.geo_object.locality?.name}\n" +
+                        $"Country: {response.geo_object.country?.name}\n" +
+                        $"Province: {response.geo_object.province?.name}\n" +
+                        $"District: {response.geo_object.district?.name}\n\n" +
+                        $"Date: {mes.DateTime.DayOfWeek}, {forecast.date}\n" +
+                        $"Day: {day.temp}°C\n" +
+                        $"Night: {night.temp}°C\n" +
+                        $"Condition: {day.condition}";
+            } else text = "Weather from this date isn't available more";
+            
+
+            
+            Bot.SendTextMessageAsync(
+                chatId: chatId,
+                text: text,
+                replyMarkup: new ReplyKeyboardRemove());
         }
 
         private static async Task SendWeather(long chatId, double lat = 47.024512, double lon = 28.832157)
@@ -135,7 +172,6 @@ namespace weather_forecast_bot
                             $"Country: {response.geo_object.country?.name} \n" +
                             $"Province: {response.geo_object.province?.name}";
 
-            var msList = new List<MessageModel>();
             var inlineKey = new List<InlineKeyboardButton>();
 
             for (int i = 0; i < 3; i++)

@@ -10,7 +10,5 @@ namespace weather_forecast_bot
 
         public double Lat {get; set;}
         public double Lon {get; set;}
-
-        public long MessageId {get; set;}
     }
 }

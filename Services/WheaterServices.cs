@@ -20,7 +20,6 @@ namespace weather_forecast_bot
             IRestResponse response = client.Execute(request);
             if (response.IsSuccessful)
             {
-                // Console.WriteLine(response.Content);
                 var obj = Newtonsoft.Json.JsonConvert.DeserializeObject<WheaterModel>(response.Content);
                 return obj;
             }

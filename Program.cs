@@ -7,7 +7,6 @@ namespace weather_forecast_bot
     {
         static void Main(string[] args)
         {
-
             var tg = new TelegramServices();
         }
     }
